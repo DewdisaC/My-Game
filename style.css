@@ -1,0 +1,85 @@
+.background {
+    background-image: url("background.png");
+    background-size: cover;
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    overflow-x: hidden;
+
+
+}
+
+.body {
+    margin: 0px;
+}
+
+.boy {
+    width: 250px;
+    margin-top: 450px;
+}
+
+
+
+.boy {
+    width: 250px;
+    margin-top: 450;
+    position: absolute;
+}
+
+.score {
+    position: absolute;
+    font-size: 50px;
+    font-weight: bold;
+    font-family: Arial;
+    margin-left: 30px;
+
+}
+
+.block {
+    position: absolute;
+    background-image: url("flame.gif");
+    background-size: cover;
+    width: 90px;
+    height: 150px;
+    margin-top: 520px;
+}
+
+.endScreen {
+    position: absolute;
+    width: 400px;
+    height: 500px;
+
+    font-size: 60px;
+    font-family: Arial;
+    font-weight: bold;
+
+    margin-top: 100px;
+    margin-left: 600px;
+
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+
+    visibility: hidden;
+}
+
+.endScore {
+    color: red;
+    font-size: 70px;
+}
+
+.button {
+    width: 300px;
+    height: 50px;
+
+    font-size: 40px;
+    font-weight: bold;
+    font-family: Arial;
+
+    background-color: blue;
+    color: white;
+
+    border: none;
+    border-radius: 50px;
+}
