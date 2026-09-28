@@ -1,25 +1,40 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Red Hat boy</title>
-    <link rel="stylesheet" href="style.css"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Red Hat Runner — a browser-based endless runner game." />
+    <title>Red Hat Runner</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
-
-<body onkeyup=" keyCheck(event);" class="body">
-    <div class="background" id="background">
-        <img src="Run (1).png" class="boy" id="boy" />
-        <div class="score" id="score">0</div>
-
-        <div class="endScreen" id="endScreen">
-            <div>Game Over !</div>
-            <div>Yor Score</div>
-            <div class="endScore" id="endScore">0</div>
-<button class="button" onclick="reload();">Try Again</button>
+<body class="body">
+    <main class="game" id="game" aria-label="Red Hat Runner game">
+        <div class="hud">
+            <div class="brand">RED HAT RUNNER</div>
+            <div class="score" id="score">0</div>
+            <div class="best">BEST <span id="bestScore">0</span></div>
         </div>
 
-    </div>
+        <div class="background" id="background">
+            <img src="Run (1).png" class="boy" id="boy" alt="Running character" />
+
+            <section class="startScreen" id="startScreen">
+                <p class="eyebrow">ARCADE RUNNER</p>
+                <h1>RED HAT RUNNER</h1>
+                <p>Press <strong>Enter</strong> or <strong>Space</strong> to start.</p>
+                <p class="controls">Jump with Space / ↑ • Touch the screen on mobile</p>
+            </section>
+
+            <section class="endScreen" id="endScreen" aria-live="polite">
+                <p class="eyebrow">RUN COMPLETE</p>
+                <h2>GAME OVER</h2>
+                <p>Your Score</p>
+                <div class="endScore" id="endScore">0</div>
+                <button class="button" id="restartButton" type="button">Try Again</button>
+            </section>
+        </div>
+    </main>
+
     <script src="script.js"></script>
 </body>
-
 </html>
