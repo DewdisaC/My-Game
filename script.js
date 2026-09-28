@@ -1,185 +1,238 @@
-var runSound = new Audio("run.mp3");
+"use strict";
+
+const runSound = new Audio("run.mp3");
+const jumpSound = new Audio("jump.mp3");
+const deadSound = new Audio("dead.mp3");
+
 runSound.loop = true;
-var jumpSound = new Audio("jump.mp3");
 
-var deadSound = new Audio("dead.mp3");
+const boy = document.getElementById("boy");
+const background = document.getElementById("background");
+const scoreElement = document.getElementById("score");
+const bestScoreElement = document.getElementById("bestScore");
+const endScreen = document.getElementById("endScreen");
+const startScreen = document.getElementById("startScreen");
+const endScore = document.getElementById("endScore");
+const restartButton = document.getElementById("restartButton");
 
-function keyCheck(event) {
-    if (event.which == 13) {
+const BEST_SCORE_KEY = "red-hat-runner-best";
+const GROUND_TOP = 450;
+const JUMP_STEPS = 12;
 
-        if (runWorkerId == 0) {
-            runWorkerId = setInterval(run, 100);
-            runSound.play();
+let running = false;
+let jumping = false;
+let gameOverState = false;
+let runTimer = null;
+let jumpTimer = null;
+let backgroundTimer = null;
+let scoreTimer = null;
+let blockTimer = null;
+let moveBlockTimer = null;
+let deadTimer = null;
 
-            backgroundWorckerId = setInterval(background, 100);
-            scoreWorkerId = setInterval(updateScore, 100);
-            createBlockWorkerId = setInterval(createBlock, 100);
-            moveBlockWorkerId = setInterval(moveBlock, 100);
-        }
+let runFrame = 1;
+let jumpFrame = 1;
+let deadFrame = 1;
+let playerTop = GROUND_TOP;
+let backgroundX = 0;
+let score = 0;
+let blockId = 0;
+let nextBlockLeft = 500;
 
+bestScoreElement.textContent = String(Number(localStorage.getItem(BEST_SCORE_KEY)) || 0);
 
-
-    }
-
-
-
-    if (event.which == 32) {
-        if (JumpworkerId == 0) {
-            clearInterval(runWorkerId);
-            runWorkerId=-1;
-            runSound.pause();
-
-            JumpworkerId = setInterval(Jump, 100);
-            jumpSound.play();
-
-
-        }
-
-    }
-
-
-}
-var boyId = document.getElementById("boy");
-var runWorkerId = 0;
-var runImageNumber = 1;
-function run() {
-    runImageNumber++;
-    if (runImageNumber == 9) {
-
-        runImageNumber = 1;
-
-    }
-    boyId.src = "Run (" + runImageNumber + ").png";
-
+function playSound(sound) {
+    sound.currentTime = 0;
+    sound.play().catch(() => undefined);
 }
 
-var JumpworkerId = 0;
-var JumpImageNumber = 1;
-var boyMarginTop = 450;
-function Jump() {
-    JumpImageNumber++;
-    if (JumpImageNumber <= 7) {
-        boyMarginTop = boyMarginTop - 30;
-        boyId.style.marginTop = boyMarginTop + "px";
-    }
+function stopGameTimers() {
+    [runTimer, jumpTimer, backgroundTimer, scoreTimer, blockTimer, moveBlockTimer, deadTimer]
+        .forEach((timer) => timer && clearInterval(timer));
 
-    if (JumpImageNumber >= 8) {
-        boyMarginTop = boyMarginTop + 30;
-        boyId.style.marginTop = boyMarginTop + "px";
-    }
-
-    if (JumpImageNumber == 13) {
-        JumpImageNumber = 1;
-        clearInterval(JumpworkerId);
-        runWorkerId = setInterval(run, 100);
-        runSound.play();
-        JumpworkerId = 0;
-
-        if (scoreWorkerId == 0) {
-            scoreWorkerId = setInterval(updateScore, 100);
-
-        }
-        if (createBlockWorkerId == 0) {
-            createBlockWorkerId = setInterval(createBlock, 100);
-        }
-        if (moveBlockWorkerId == 0) {
-            moveBlockWorkerId = setInterval(moveBlock, 100);
-        }
-        if (backgroundWorckerId == 0) {
-            backgroundWorckerId = setInterval(background, 100);
-        }
-    }
-    boyId.src = "Jump (" + JumpImageNumber + ").png";
-
+    runTimer = null;
+    jumpTimer = null;
+    backgroundTimer = null;
+    scoreTimer = null;
+    blockTimer = null;
+    moveBlockTimer = null;
+    deadTimer = null;
 }
-var backgroundId = document.getElementById("background");
-var positionX = 0;
-var backgroundWorckerId = 0;
-function background() {
-    positionX = positionX - 20;
-    backgroundId.style.backgroundPositionX = positionX + "px";
+
+function startGame() {
+    if (running || gameOverState) return;
+
+    running = true;
+    startScreen.classList.add("hidden");
+    runSound.play().catch(() => undefined);
+
+    runTimer = setInterval(animateRun, 100);
+    backgroundTimer = setInterval(moveBackground, 40);
+    scoreTimer = setInterval(updateScore, 100);
+    blockTimer = setInterval(createBlock, 1300);
+    moveBlockTimer = setInterval(moveBlocks, 40);
 }
-var scoreId = document.getElementById("score");
-var scoreWorkerId = 0;
-var newScore = 0;
+
+function animateRun() {
+    runFrame = runFrame === 8 ? 1 : runFrame + 1;
+    boy.src = `Run (${runFrame}).png`;
+}
+
+function moveBackground() {
+    backgroundX -= 8;
+    background.style.backgroundPositionX = `${backgroundX}px`;
+}
 
 function updateScore() {
-
-    newScore++;
-    scoreId.innerHTML = newScore;
-
-}
-var createBlockWorkerId = 0;
-var blockMarginLeft = 500;
-var blockNumber = 1;
-
-function createBlock() {
-
-    var block = document.createElement("div");
-    block.className = "block";
-    block.id = "block" + blockNumber;
-
-    blockNumber++;
-    var gap = Math.random() * (1000 - 400) + 400;
-    blockMarginLeft = blockMarginLeft + gap;
-    block.style.marginLeft = blockMarginLeft + "px";
-
-
-    document.getElementById("background").appendChild(block);
-
+    score += 1;
+    scoreElement.textContent = String(score);
 }
 
-var moveBlockWorkerId = 0;
-function moveBlock() {
+function startJump() {
+    if (!running || jumping || gameOverState) return;
 
-    for (var i = 1; i <= blockNumber; i++) {
-        var currentBlock = document.getElementById("block" + i);
-        var currentBlockMarginLeft = currentBlock.style.marginLeft;
-        var newBlockMarginLeft = parseInt(currentBlockMarginLeft) - 20;
+    jumping = true;
+    clearInterval(runTimer);
+    runTimer = null;
+    runSound.pause();
+    playSound(jumpSound);
 
-        currentBlock.style.marginLeft = newBlockMarginLeft + "px";
-        //alart (newBlockMarginLeft);
+    jumpFrame = 1;
+    jumpTimer = setInterval(animateJump, 70);
+}
 
-        if (newBlockMarginLeft < 139 & newBlockMarginLeft > 39) {
-            // alart(boyMarginTop);
-            //alart("Dead");
-            if (boyMarginTop > 410) {
-                clearInterval(runWorkerId);
-                runSound.pause();
-                clearInterval(JumpworkerId);
-                JumpworkerId = -1;
+function animateJump() {
+    jumpFrame += 1;
 
-                clearInterval(backgroundWorckerId);
-                clearInterval(scoreWorkerId);
-                clearInterval(createBlockWorkerId);
-                clearInterval(moveBlockWorkerId);
+    if (jumpFrame <= 6) {
+        playerTop -= 38;
+    } else {
+        playerTop += 38;
+    }
 
-                deadWorkerId = setInterval(dead, 100);
-                deadSound.play();
-                //alert("Dead");
+    boy.style.top = `${playerTop}px`;
+    boy.src = `Jump (${jumpFrame <= 12 ? jumpFrame : 12}).png`;
 
-            }
+    if (jumpFrame >= JUMP_STEPS) {
+        clearInterval(jumpTimer);
+        jumpTimer = null;
+        jumping = false;
+        playerTop = GROUND_TOP;
+        boy.style.top = `${GROUND_TOP}px`;
+        runFrame = 1;
+        boy.src = "Run (1).png";
+
+        if (running) {
+            runTimer = setInterval(animateRun, 100);
+            runSound.play().catch(() => undefined);
         }
     }
-
 }
-var deadWorkerId = 0;
-var deadImageNumber = 1;
 
-function dead() {
+function createBlock() {
+    if (!running) return;
 
-    deadImageNumber++;
-    if (deadImageNumber == 11) {
-        deadImageNumber = 10;
-        boyId.style.marginTop = "450px";
-        document.getElementById("endScreen").style.visibility = "visible";
-        document.getElementById("endScore").innerHTML = newScore;
+    const block = document.createElement("div");
+    block.className = "block";
+    block.id = `block-${blockId++}`;
 
+    const gap = Math.floor(Math.random() * 600) + 400;
+    nextBlockLeft += gap;
+    block.style.left = `${nextBlockLeft}px`;
+
+    background.appendChild(block);
+}
+
+function moveBlocks() {
+    if (!running) return;
+
+    const blocks = background.querySelectorAll(".block");
+    const playerRect = boy.getBoundingClientRect();
+
+    blocks.forEach((block) => {
+        const currentLeft = Number.parseInt(block.style.left || "0", 10);
+        const newLeft = currentLeft - 8;
+        block.style.left = `${newLeft}px`;
+
+        if (newLeft < -120) {
+            block.remove();
+            return;
+        }
+
+        const blockRect = block.getBoundingClientRect();
+        const horizontalCollision =
+            playerRect.right - 20 > blockRect.left &&
+            playerRect.left + 20 < blockRect.right;
+
+        const verticalCollision = playerRect.bottom - 25 > blockRect.top;
+
+        if (horizontalCollision && verticalCollision) {
+            finishGame();
+        }
+    });
+}
+
+function finishGame() {
+    if (gameOverState) return;
+
+    gameOverState = true;
+    running = false;
+    jumping = false;
+    stopGameTimers();
+
+    runSound.pause();
+    playSound(deadSound);
+
+    deadFrame = 1;
+    deadTimer = setInterval(animateDeath, 100);
+}
+
+function animateDeath() {
+    deadFrame = Math.min(deadFrame + 1, 10);
+    boy.style.top = `${GROUND_TOP}px`;
+    boy.src = `Dead (${deadFrame}).png`;
+
+    if (deadFrame === 10) {
+        clearInterval(deadTimer);
+        deadTimer = null;
+
+        const best = Math.max(score, Number(localStorage.getItem(BEST_SCORE_KEY)) || 0);
+        localStorage.setItem(BEST_SCORE_KEY, String(best));
+        bestScoreElement.textContent = String(best);
+        endScore.textContent = String(score);
+        endScreen.classList.add("visible");
+    }
+}
+
+function restartGame() {
+    window.location.reload();
+}
+
+function handleKeyDown(event) {
+    if (event.code === "Enter" && !running && !gameOverState) {
+        startGame();
+        return;
     }
 
-    boyId.src = "Dead (" + deadImageNumber + ").png";
+    if (event.code === "Space" || event.code === "ArrowUp") {
+        event.preventDefault();
+
+        if (!running && !gameOverState) {
+            startGame();
+        } else {
+            startJump();
+        }
+    }
 }
 
-function reload() {
-    location.reload();
-}
+document.addEventListener("keydown", handleKeyDown);
+background.addEventListener("pointerdown", () => {
+    if (!running && !gameOverState) {
+        startGame();
+    } else {
+        startJump();
+    }
+});
+restartButton.addEventListener("click", restartGame);
+
+boy.style.top = `${GROUND_TOP}px`;
